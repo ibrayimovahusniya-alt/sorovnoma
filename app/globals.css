@@ -51,7 +51,7 @@ h2{font-size:17px;margin:0 0 14px;font-weight:700}
 .main > *:nth-child(5){animation-delay:.2s}.main > *:nth-child(6){animation-delay:.25s}
 @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
 .grid{display:grid;gap:16px}
-.stats{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+.stats{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
 .stat{position:relative;overflow:hidden;margin:0}
 .stat:hover{transform:translateY(-5px);box-shadow:0 18px 40px -14px rgba(91,33,182,.4)}
 .stat .icon{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-size:21px;margin-bottom:12px;background:var(--grad);box-shadow:0 8px 18px -6px rgba(147,51,234,.6)}
