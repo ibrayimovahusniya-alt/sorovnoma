@@ -24,9 +24,9 @@ export default async function SurveyPage({ params, searchParams }) {
             <button className={`btn ${s.active ? 'sec' : 'ok'}`}>{s.active ? "⏸ To'xtatish" : '▶️ Faollashtirish'}</button></form>
         </div>
       </div>
-      {searchParams.sent && <div className="alert">📨 Xabar {searchParams.sent} / {searchParams.total} foydalanuvchiga yuborildi.</div>}
+      {searchParams.sent && <div className="alert">📨 So'rovnoma botda {searchParams.sent} / {searchParams.total} foydalanuvchiga darhol yuborildi.</div>}
       {searchParams.err === 'q' && <div className="alert err">Savol matni (o'zbekcha) va kamida 2 ta variant kiritilishi kerak.</div>}
-      {!s.active && <div className="alert">So'rovnoma nofaol — botda ko'rinmaydi. Savollarni qo'shib bo'lgach, "Faollashtirish" tugmasini bosing.</div>}
+      {!s.active && <div className="alert">So'rovnoma nofaol — botda ko'rinmaydi. Savollarni qo'shib bo'lgach, "Faollashtirish" tugmasini bosing — so'rovnoma darhol barcha foydalanuvchilarga botda yuboriladi.</div>}
 
       <div className="card">
         <h2>Savollar ({qs.length})</h2>
@@ -42,7 +42,7 @@ export default async function SurveyPage({ params, searchParams }) {
               </div>
             </div>
             {qn.type === 'choice' && <ul style={{ margin: '6px 0' }}>{qn.options.map((o, k) => <li key={k}>{o.uz}{o.ru || o.en ? <span className="muted"> / {o.ru} / {o.en}</span> : null}</li>)}</ul>}
-            <details><summary>Tahrirlash</summary><QuestionForm action={updateQuestion} surveyId={id} question={qn} submitLabel="Saqlash" /></details>
+            <details className="edit"><summary>Tahrirlash</summary><QuestionForm action={updateQuestion} surveyId={id} question={qn} submitLabel="Saqlash" /></details>
           </div>
         ))}
       </div>
@@ -64,7 +64,7 @@ export default async function SurveyPage({ params, searchParams }) {
 
       <div className="card row between">
         <form action={broadcastSurvey}><input type="hidden" name="id" value={id} />
-          <Confirm className="btn ok" msg="Barcha ro'yxatdan o'tgan foydalanuvchilarga (hali qatnashmaganlarga) bu so'rovnoma haqida xabar yuborilsinmi?">📨 Foydalanuvchilarga yuborish</Confirm></form>
+          <Confirm className="btn ok" msg="Barcha ro'yxatdan o'tgan foydalanuvchilarga (hali qatnashmaganlarga) bu so'rovnoma haqida xabar yuborilsinmi?">📨 Qayta yuborish (qatnashmaganlarga)</Confirm></form>
         <form action={deleteSurvey}><input type="hidden" name="id" value={id} />
           <Confirm msg="So'rovnoma va barcha javoblar butunlay o'chiriladi!" className="btn danger">🗑 So'rovnomani o'chirish</Confirm></form>
       </div>

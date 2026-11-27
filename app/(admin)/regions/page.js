@@ -27,7 +27,7 @@ export default async function Regions() {
               <div style={{ flex: 1, minWidth: 220 }}><label>Yangi tuman/shahar</label><textarea name="names" rows={1} style={{ minHeight: 40 }} placeholder="Masalan: Yangi tuman" required /></div>
               <button className="btn">➕ Qo'shish</button>
             </form>
-            <details><summary>Viloyat nomini tahrirlash / o'chirish</summary>
+            <details className="edit"><summary>Viloyat nomini tahrirlash / o'chirish</summary>
               <form action={updateRegion} className="grid cols3" style={{ alignItems: 'end' }}>
                 <input type="hidden" name="id" value={r.id} />
                 <div><label>O'zbekcha</label><input name="name_uz" defaultValue={r.name_uz} required /></div>

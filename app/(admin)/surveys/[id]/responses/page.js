@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { q } from '@/lib/db';
 import Confirm from '@/components/Confirm';
-import { deleteResponse, clearResponses } from '../../../../actions';
+import { deleteResponse, clearResponses, markAllSeen } from '../../../../actions';
 
 export default async function Responses({ params, searchParams }) {
   const id = Number(params.id);
@@ -31,6 +31,9 @@ export default async function Responses({ params, searchParams }) {
         <h1>📊 {s.title_uz}</h1>
         <div className="row">
           <Link className="btn sec" href={`/surveys/${id}`}>← So'rovnoma</Link>
+          {rs.some((r) => r.completed && !r.seen) && (
+            <form action={markAllSeen}><input type="hidden" name="survey_id" value={id} /><button className="btn sec">✓ Ko'rildi deb belgilash</button></form>
+          )}
           <a className="btn ok" href={`/api/export/${id}`}>⬇️ Excel (CSV) yuklab olish</a>
         </div>
       </div>
@@ -79,9 +82,9 @@ export default async function Responses({ params, searchParams }) {
             <thead><tr><th>#</th><th>Ism familiya</th><th>Telefon</th><th>Hudud</th>{qs.map((x) => <th key={x.id}>{x.text_uz}</th>)}<th>Sana</th><th></th></tr></thead>
             <tbody>
               {rs.map((r, i) => (
-                <tr key={r.id}>
+                <tr key={r.id} className={r.completed && !r.seen ? 'unseen-row' : ''}>
                   <td>{rs.length - i}</td>
-                  <td>{r.full_name}{r.username && <div className="muted">@{r.username}</div>}{!r.completed && <div><span className="badge off">tugallanmagan</span></div>}</td>
+                  <td>{r.completed && !r.seen && <span className="new-tag" style={{ marginLeft: 0, marginRight: 6 }}>YANGI</span>}{r.full_name}{r.username && <div className="muted">@{r.username}</div>}{!r.completed && <div><span className="badge off">tugallanmagan</span></div>}</td>
                   <td>{r.phone}</td>
                   <td>{r.region}<div className="muted">{r.district}</div></td>
                   {qs.map((x) => <td key={x.id}>{map[r.id]?.[x.id]?.value ?? <span className="muted">—</span>}</td>)}

@@ -55,7 +55,15 @@ export async function updateSurvey(f) {
 
 export async function toggleSurvey(f) {
   const id = n(f, 'id');
-  await q('UPDATE surveys SET active = NOT active WHERE id=$1', [id]);
+  const [sv] = await q('UPDATE surveys SET active = NOT active WHERE id=$1 RETURNING active, notified', [id]);
+  // Birinchi marta faollashtirilganda — darhol barcha foydalanuvchilarga botda chiqadi
+  if (sv?.active && !sv.notified) {
+    const [{ qn }] = await q('SELECT count(*)::int AS qn FROM questions WHERE survey_id=$1', [id]);
+    if (qn > 0) {
+      const r = await sendSurveyToUsers(id);
+      redirect(`/surveys/${id}?sent=${r.sent}&total=${r.total}`);
+    }
+  }
   revalidatePath('/surveys');
   revalidatePath(`/surveys/${id}`);
 }
@@ -124,12 +132,12 @@ export async function clearResponses(f) {
   revalidatePath(`/surveys/${sid}/responses`);
 }
 
-// Barcha ro'yxatdan o'tgan foydalanuvchilarga so'rovnoma haqida xabar
-export async function broadcastSurvey(f) {
-  const sid = n(f, 'id');
+// Barcha ro'yxatdan o'tgan (hali qatnashmagan) foydalanuvchilarga so'rovnomani yuborish
+const h = (x) => String(x ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+async function sendSurveyToUsers(sid) {
   const [sv] = await q('SELECT * FROM surveys WHERE id=$1', [sid]);
-  if (!sv) return;
-  if (!sv.active) await q('UPDATE surveys SET active=true WHERE id=$1', [sid]);
+  if (!sv) return { sent: 0, total: 0 };
   const users = await q(
     `SELECT u.tg_id, u.lang FROM users u WHERE u.registered
      AND NOT EXISTS (SELECT 1 FROM responses r WHERE r.survey_id=$1 AND r.user_id=u.tg_id AND r.completed)`,
@@ -137,21 +145,43 @@ export async function broadcastSurvey(f) {
   );
   const started = Date.now();
   let sent = 0;
-  for (let i = 0; i < users.length; i += 20) {
+  for (let i = 0; i < users.length; i += 25) {
     if (Date.now() - started > 50000) break;
-    const batch = users.slice(i, i + 20);
-    const res = await Promise.all(batch.map((u) => {
+    const res = await Promise.all(users.slice(i, i + 25).map((u) => {
       const l = u.lang || 'uz';
+      const desc = loc(sv, 'desc', l);
       return tg('sendMessage', {
         chat_id: u.tg_id,
-        text: `${T[l].newSurvey}\n\n📋 ${loc(sv, 'title', l)}`,
+        text: `${T[l].newSurvey}\n\n📋 <b>${h(loc(sv, 'title', l))}</b>${desc ? '\n\n' + h(desc) : ''}`,
+        parse_mode: 'HTML',
         reply_markup: { inline_keyboard: [[{ text: T[l].start, callback_data: `sv:${sid}` }]] },
       });
     }));
     sent += res.filter((r) => r.ok).length;
-    await new Promise((r) => setTimeout(r, 1000));
+    if (i + 25 < users.length) await new Promise((r) => setTimeout(r, 1000));
   }
-  redirect(`/surveys/${sid}?sent=${sent}&total=${users.length}`);
+  await q('UPDATE surveys SET notified=true WHERE id=$1', [sid]);
+  return { sent, total: users.length };
+}
+
+export async function broadcastSurvey(f) {
+  const sid = n(f, 'id');
+  await q('UPDATE surveys SET active=true WHERE id=$1', [sid]);
+  const r = await sendSurveyToUsers(sid);
+  redirect(`/surveys/${sid}?sent=${r.sent}&total=${r.total}`);
+}
+
+// ---------- javoblar: ko'rildi belgisi ----------
+export async function markSeen(ids) {
+  const list = (ids || []).map(Number).filter(Boolean);
+  if (!list.length) return;
+  await q('UPDATE responses SET seen=true WHERE id = ANY($1::int[])', [list]);
+}
+
+export async function markAllSeen(f) {
+  const sid = Number(f.get('survey_id')) || null;
+  await q('UPDATE responses SET seen=true WHERE NOT seen AND ($1::int IS NULL OR survey_id=$1)', [sid]);
+  revalidatePath('/', 'layout');
 }
 
 // ---------- foydalanuvchilar ----------

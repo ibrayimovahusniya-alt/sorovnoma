@@ -4,7 +4,8 @@ import { toggleSurvey } from '../../actions';
 export default async function Surveys() {
   const list = await q(`SELECT s.*,
     (SELECT count(*) FROM questions WHERE survey_id=s.id)::int AS qn,
-    (SELECT count(*) FROM responses WHERE survey_id=s.id AND completed)::int AS rn
+    (SELECT count(*) FROM responses WHERE survey_id=s.id AND completed)::int AS rn,
+    (SELECT count(*) FROM responses WHERE survey_id=s.id AND completed AND NOT seen)::int AS un
     FROM surveys s ORDER BY s.created_at DESC`);
   return (
     <>
@@ -19,7 +20,7 @@ export default async function Surveys() {
                 <tr key={s.id}>
                   <td><Link href={`/surveys/${s.id}`}><b>{s.title_uz}</b></Link></td>
                   <td>{s.qn}</td>
-                  <td><Link href={`/surveys/${s.id}/responses`}>{s.rn}</Link></td>
+                  <td><Link href={`/surveys/${s.id}/responses`}>{s.rn}</Link>{s.un > 0 && <span className="pill-new sm">+{s.un} yangi</span>}</td>
                   <td><span className={`badge ${s.active ? 'on' : 'off'}`}>{s.active ? 'Faol' : 'Nofaol'}</span></td>
                   <td className="row">
                     <Link className="btn sec sm" href={`/surveys/${s.id}`}>Tahrirlash</Link>
